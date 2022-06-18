@@ -52,7 +52,7 @@ def thank(voiceBroad, sender, quantity, giftName):
 def welcome(voiceBroad, audience):
 	text = "欢迎{}进入直播间".format(audience)
 	print(text)
-	#voiceBroad.appendText(text)
+	voiceBroad.appendText(text)
 
 
 
@@ -69,7 +69,7 @@ def chuanHua(voiceBroad, speaker, content):
 
 if __name__ == "__main__":
 	#房间号
-	roomId = 866574
+	roomId = input("输入房间号：")
 	
 	
 	vb = voiceBroadcaster(1, "E:\\鬼畜\\活字印刷\\sources\\",

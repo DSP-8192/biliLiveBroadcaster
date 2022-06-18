@@ -3,9 +3,11 @@ import brotli
 import time
 import rel
 from threading import Thread
+from threading import Lock
 import json
 import requests
 from functools import partial
+import timeit
 
 
 
@@ -31,8 +33,8 @@ def _raw2Json(raw):
 	bracketPair = 0
 	startPosition = 0
 		
-	
-	for n in range(0, len(raw)):
+	n = 0
+	while (n < len(raw)):
 		#检测左括号
 		if raw[n:n+1] == b"{":
 			if bracketPair == 0:	#此处为起始
@@ -44,58 +46,65 @@ def _raw2Json(raw):
 			bracketPair -= 1
 			if bracketPair == 0:	#此处为末尾
 				jsonList.append(json.loads(raw[startPosition:n+1]))	#截取段落
-	
+				n += 16				#跳过两个段落之间的乱码
+		
+		n += 1
+		
 	return jsonList		#输出
 
 
 
 #解读处理好的数据
-def _interpreteJson(data, onReceiveDanmu, onReceiveGift, onAudienceEnter):		
+def _interpreteJson(data, onReceiveDanmu, onAudienceEnter, giftStat):
 	for info in data:
-		match info["cmd"]:
-			#弹幕
-			case "DANMU_MSG":
-				speaker = info["info"][2][1]
-				content = info["info"][1]
-				onReceiveDanmu(speaker, content)
-			
-			
-			#礼物（单次点击）
-			case "SEND_GIFT":
-				sender = info["data"]["uname"]
-				quantity = info["data"]["num"]
-				giftName = info["data"]["giftName"]
-				if info["data"]["batch_combo_id"] == "" or (giftName != "小心心" and giftName != "辣条"):
-					onReceiveGift(sender, quantity, giftName)
-			
-			
-			#礼物（连击）
-			case "COMBO_SEND":
-				sender = info["data"]["uname"]
-				quantity = info["data"]["combo_num"]
-				giftName = info["data"]["gift_name"]
-				onReceiveGift(sender, quantity, giftName)
-			
-			
-			#进入直播间
-			case "INTERACT_WORD":
-				audience = info["data"]["uname"]
-				onAudienceEnter(audience)
+		try:
+			match info["cmd"]:
+				#弹幕
+				case "DANMU_MSG":
+					speaker = info["info"][2][1]
+					content = info["info"][1]
+					onReceiveDanmu(speaker, content)
+				
+				
+				#礼物
+				case "SEND_GIFT":
+					sender = info["data"]["uname"]
+					quantity = info["data"]["num"]
+					giftName = info["data"]["giftName"]
+					print("收到礼物")
+					giftStat.add(sender, giftName, quantity)
+					
+	
+				
+				#进入直播间
+				case "INTERACT_WORD":
+					audience = info["data"]["uname"]
+					onAudienceEnter(audience)
+		
+		except:			#无关信息
+			pass
+		
 
 
 
 #收到数据
-def _onMessage(onReceiveDanmu, onReceiveGift, onAudienceEnter, ws, message):
-	if message[7] == 3:			#用brotli解压缩
+def _onMessage(onReceiveDanmu, onAudienceEnter, giftStat, ws, message):
+	if message[7] == 3:				#用brotli解压缩
 		rawData = brotli.decompress(message[16:])[16:]
-	elif message[7] == 0:		#无需解压缩
+		
+	elif message[7] == 0:			#无需解压缩
 		rawData = message[16:]
-	else:						#与直播间内容无关
+		
+	else:							#与直播间内容无关
 		return
 	
-	data = _raw2Json(rawData)	#转换为json词典
+	try:
+		data = _raw2Json(rawData)	#转换为json词典
+	except:
+		print(rawData)
+	
 	#解读数据
-	_interpreteJson(data, onReceiveDanmu, onReceiveGift, onAudienceEnter)
+	_interpreteJson(data, onReceiveDanmu, onAudienceEnter, giftStat)
 
 
 
@@ -121,8 +130,20 @@ def _sendHeartBeat(ws):
 
 
 
+#统计收到的礼物
+def _collectGiftReceived(giftStat, onReceiveGift):
+	while(True):
+		time.sleep(1)
+		#统计
+		giftList = giftStat.extractData()
+		
+		for gift in giftList:
+			onReceiveGift(gift[0], gift[2], gift[1])	#用户自定义函数
+		
+
+
 #已连接上
-def _onOpen(realRoomId, key, ws):
+def _onOpen(realRoomId, key, giftStat, onReceiveGift, ws):
 	#编辑确认信息
 	verification = b'{"uid":0,"roomid":' + bytes(str(realRoomId), "utf-8") + b',"protover":3,"platform":"web","type":2,"key":"' + bytes(key, "utf-8") + b'"}'
 	dataToSend = (len(verification)+16).to_bytes(4, "big") + bytearray.fromhex("001000010000000700000001") + verification
@@ -131,15 +152,52 @@ def _onOpen(realRoomId, key, ws):
 	ws.send(dataToSend)
 	
 	#开启心跳包定时
-	x = Thread(target=_sendHeartBeat, args=(ws,))
-	x.start()
+	Thread(target=_sendHeartBeat, args=(ws,)).start()
+	
+	#定时统计收到的礼物
+	Thread(target=_collectGiftReceived, args=(giftStat, onReceiveGift)).start()
+	
 	print("已连接")
 
 
 
+#收到的礼物列表
+class _giftInfoArray:
+	def __init__(self):
+		self.__data = []		#所有收到的礼物
+	
+	
+	#向列表中添加礼物
+	def add(self, sender, giftName, quantity):
+		#寻找相同用户赠送的相同礼物并叠加
+		for i in range(0, len(self.__data)):
+			if(self.__data[i][0:2] == [sender, giftName]):
+				self.__data[i][2] += quantity
+				self.__data[i][3] = timeit.default_timer()
+				return
+		#否则新建一个元素
+		self.__data.append([sender, giftName, quantity, timeit.default_timer()])
+	
+	
+	#提取数据
+	def extractData(self):
+		currentTime = timeit.default_timer()
+		listToReturn = []
+		
+		for info in self.__data:
+			#超过3秒未赠送同样的礼物（连击停止）
+			if(currentTime - info[3] > 3):
+				listToReturn.append(info)
+				self.__data.remove(info)
+		
+		return listToReturn
+		
 
-class biliLiveBroadcaster:
+
+
+class biliLiveBroadcaster:	
 	def __init__(self, roomId, onReceiveDanmu, onReceiveGift, onAudienceEnter):
+		self.__giftStat = _giftInfoArray()
 		self.__roomId = roomId
 		self.__onReceiveDanmu = onReceiveDanmu
 		self.__onReceiveGift = onReceiveGift
@@ -156,11 +214,15 @@ class biliLiveBroadcaster:
 		#开启连接
 		websocket.enableTrace(False)
 		ws = websocket.WebSocketApp("wss://tx-sh-live-comet-01.chat.bilibili.com/sub",
-									on_open = partial(_onOpen, self.__realRoomId, self.__key),
+									on_open = partial(_onOpen,
+														self.__realRoomId,
+														self.__key,
+														self.__giftStat,
+														self.__onReceiveGift),
 									on_message = partial(_onMessage,
 														self.__onReceiveDanmu,
-														self.__onReceiveGift,
-														self.__onAudienceEnter),
+														self.__onAudienceEnter,
+														self.__giftStat),
 									on_error = _onError,
 									on_close = _onClose)
 		
