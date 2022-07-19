@@ -71,7 +71,6 @@ def _interpreteJson(data, onReceiveDanmu, onAudienceEnter, giftStat):
 					sender = info["data"]["uname"]
 					quantity = info["data"]["num"]
 					giftName = info["data"]["giftName"]
-					print("收到礼物")
 					giftStat.add(sender, giftName, quantity)
 					
 	

@@ -68,12 +68,20 @@ def chuanHua(voiceBroad, speaker, content):
 
 
 if __name__ == "__main__":
+	#打开设置文件
+	configFile = open(".\\settings.json", encoding="utf8")
+	settings = json.load(configFile)
+	configFile.close()
+	
+	#读取设置
+	sourceDir = settings["sourceDirectory"]		#音频文件存放目录
+	dictDir = settings["dictDirectory"]			#词典存放目录
+	numOfThreads = settings["numOfThreads"]		#线程数
+	
 	#房间号
 	roomId = input("输入房间号：")
 	
-	
-	vb = voiceBroadcaster(1, "E:\\鬼畜\\活字印刷\\sources\\",
-						"E:\\鬼畜\\活字印刷\\dictionary.csv")
+	vb = voiceBroadcaster(numOfThreads, sourceDir, dictDir)
 	
 	
 	broadcaster = biliLiveBroadcaster(roomId,
