@@ -144,7 +144,7 @@ def _collectGiftReceived(giftStat, onReceiveGift):
 #已连接上
 def _onOpen(realRoomId, key, giftStat, onReceiveGift, ws):
 	#编辑确认信息
-	verification = b'{"uid":0,"roomid":' + bytes(str(realRoomId), "utf-8") + b',"protover":3,"platform":"web","type":2,"key":"' + bytes(key, "utf-8") + b'"}'
+	verification = b'{"uid":0,"roomid":' + bytes(str(realRoomId), "utf-8") + b',"protover":3,"buvid":"AUTO5616414669161256","platform":"danmuji","type":2,"key":"' + bytes(key, "utf-8") + b'"}'
 	dataToSend = (len(verification)+16).to_bytes(4, "big") + bytearray.fromhex("001000010000000700000001") + verification
 	
 	#发送确认信息
@@ -212,7 +212,7 @@ class biliLiveBroadcaster:
 		
 		#开启连接
 		websocket.enableTrace(False)
-		ws = websocket.WebSocketApp("wss://tx-sh-live-comet-01.chat.bilibili.com/sub",
+		ws = websocket.WebSocketApp("wss://broadcastlv.chat.bilibili.com/sub",
 									on_open = partial(_onOpen,
 														self.__realRoomId,
 														self.__key,
