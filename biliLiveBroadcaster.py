@@ -21,8 +21,9 @@ def _getRealRoomId(roomId):
 
 
 #获取key
-def _getKey(realRoomId):
-	keyInfo = requests.get("https://api.live.bilibili.com/room/v1/Danmu/getConf?room_id=" + str(realRoomId) + "&platform=pc&player=web",headers=headers).json()
+def _getKey(realRoomId,userSESSDATA):
+	cookies = {'SESSDATA' : userSESSDATA}
+	keyInfo = requests.get("https://api.live.bilibili.com/xlive/web-room/v1/index/getDanmuInfo?id=" + str(realRoomId) + "&platform=pc&player=web",headers=headers,cookies=cookies).json()
 	key = keyInfo["data"]["token"]
 	return key
 
@@ -143,9 +144,9 @@ def _collectGiftReceived(giftStat, onReceiveGift):
 
 
 #已连接上
-def _onOpen(realRoomId, key, giftStat, onReceiveGift, ws):
+def _onOpen(realRoomId, userUID, key, giftStat, onReceiveGift, ws):
 	#编辑确认信息
-	verification = b'{"uid":382228653,"roomid":' + bytes(str(realRoomId), "utf-8") + b',"protover":3,"buvid":"XY87B558B729BA2CD745A4FB711BC37C3139D","platform":"danmuji","type":2,"key":"' + bytes(key, "utf-8") + b'"}'
+	verification = b'{"uid":' + bytes(str(userUID), "utf-8") + b',"roomid":' + bytes(str(realRoomId), "utf-8") + b',"protover":3,"buvid":"XY87B558B729BA2CD745A4FB711BC37C3139D","platform":"danmuji","type":2,"key":"' + bytes(key, "utf-8") + b'"}'
 	dataToSend = (len(verification)+16).to_bytes(4, "big") + bytearray.fromhex("001000010000000700000001") + verification
 	
 	#发送确认信息
@@ -196,9 +197,11 @@ class _giftInfoArray:
 
 
 class biliLiveBroadcaster:	
-	def __init__(self, roomId, onReceiveDanmu, onReceiveGift, onAudienceEnter):
+	def __init__(self, roomId, userUID, userSESSDATA, onReceiveDanmu, onReceiveGift, onAudienceEnter):
 		self.__giftStat = _giftInfoArray()
 		self.__roomId = roomId
+		self.__userUID = userUID			#新
+		self.__userSESSDATA = userSESSDATA	#新
 		self.__onReceiveDanmu = onReceiveDanmu
 		self.__onReceiveGift = onReceiveGift
 		self.__onAudienceEnter = onAudienceEnter
@@ -209,13 +212,14 @@ class biliLiveBroadcaster:
 		
 		#获取真实房间号和key
 		self.__realRoomId = _getRealRoomId(self.__roomId)
-		self.__key = _getKey(self.__realRoomId)
+		self.__key = _getKey(self.__realRoomId,self.__userSESSDATA)
 		
 		#开启连接
 		websocket.enableTrace(False)
 		ws = websocket.WebSocketApp("wss://broadcastlv.chat.bilibili.com/sub",
 									on_open = partial(_onOpen,
 														self.__realRoomId,
+														self.__userUID,		#新
 														self.__key,
 														self.__giftStat,
 														self.__onReceiveGift),

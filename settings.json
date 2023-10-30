@@ -1,5 +1,10 @@
 {
-	"sourceDirectory":"E:\\鬼畜\\活字印刷\\sources\\",
-	"dictDirectory":"E:\\鬼畜\\活字印刷\\dictionary.csv",
-	"numOfThreads":1
+	"sourceDirectory": "./sources/",
+	"ysddSourceDirectory": "./ysddSources/",
+	"dictFile": "./dictionary.json",
+	"ysddTableFile": "./ysddTable.json",
+	"numOfThreads":2,
+	"userUID": "0000000",
+	"usercookie": "0000000",
+	"isysddon":1
 }

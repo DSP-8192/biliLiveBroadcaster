@@ -14,7 +14,7 @@ class voiceBroadcaster:
 	#初始化
 	def __init__(self, numThread, voicePath, dictPath):
 		self.numThread = numThread
-		self.hzysProcesser = huoZiYinShua(voicePath, dictPath)
+		self.hzysProcesser = huoZiYinShua("./settings.json")
 	
 	#添加需要朗读的文本
 	def appendText(self, data):
@@ -31,12 +31,12 @@ class voiceBroadcaster:
 				data = self.listToRead.pop(0)
 				self.locker.release()
 				#用活字印刷播报
-				self.hzysProcesser.playText(data, filePath)
+				self.hzysProcesser.directPlay(data, filePath,ysdd)
 	
 	#开始播报
 	def startOperation(self):
 		for n in range(1, self.numThread+1):
-			Thread(target=self.__broadcast, args=(".\\tempOutput\\"+str(n)+".wav", )).start()
+			Thread(target=self.__broadcast, args=("./tempOutput/"+str(n)+".wav", )).start()
 
 
 
@@ -75,9 +75,18 @@ if __name__ == "__main__":
 	
 	#读取设置
 	sourceDir = settings["sourceDirectory"]		#音频文件存放目录
-	dictDir = settings["dictDirectory"]			#词典存放目录
+	dictDir = settings["dictFile"]				#词典存放目录
 	numOfThreads = settings["numOfThreads"]		#线程数
-	
+	userUID = settings["userUID"]				#用户的UID
+	userSESSDATA = settings["usercookie"]			#用户的cookie，仅需要提供SESSDATA，需要与userUID匹配
+	isysddon = settings["isysddon"]
+	#b站cookie获取方式可以参考：https://zmtblog.xdkd.ltd/2021/10/06/Get_bilibili_cookie/
+
+	if isysddon == 1:
+		ysdd = True
+	if isysddon == 0:
+		ysdd = False
+
 	#房间号
 	roomId = input("输入房间号：")
 	
@@ -85,6 +94,8 @@ if __name__ == "__main__":
 	
 	
 	broadcaster = biliLiveBroadcaster(roomId,
+								   	userUID,		#新增
+									userSESSDATA,		#新增
 									partial(chuanHua, vb),
 									partial(thank, vb),
 									partial(welcome, vb))
