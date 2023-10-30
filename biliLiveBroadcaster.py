@@ -11,9 +11,10 @@ import timeit
 
 
 
+headers = {'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/70.0.3538.25 Safari/537.36 Core/1.70.3880.400 QQBrowser/10.8.4554.400 '}
 #获取真实房间号
 def _getRealRoomId(roomId):
-	roomInfo = requests.get("https://api.live.bilibili.com/room/v1/Room/room_init?id=" + str(roomId)).json()
+	roomInfo = requests.get("https://api.live.bilibili.com/room/v1/Room/room_init?id=" + str(roomId),headers=headers).json()
 	realRoomId = roomInfo["data"]["room_id"]
 	return realRoomId
 
@@ -21,7 +22,7 @@ def _getRealRoomId(roomId):
 
 #获取key
 def _getKey(realRoomId):
-	keyInfo = requests.get("https://api.live.bilibili.com/room/v1/Danmu/getConf?room_id=" + str(realRoomId) + "&platform=pc&player=web").json()
+	keyInfo = requests.get("https://api.live.bilibili.com/room/v1/Danmu/getConf?room_id=" + str(realRoomId) + "&platform=pc&player=web",headers=headers).json()
 	key = keyInfo["data"]["token"]
 	return key
 
@@ -144,7 +145,7 @@ def _collectGiftReceived(giftStat, onReceiveGift):
 #已连接上
 def _onOpen(realRoomId, key, giftStat, onReceiveGift, ws):
 	#编辑确认信息
-	verification = b'{"uid":0,"roomid":' + bytes(str(realRoomId), "utf-8") + b',"protover":3,"buvid":"AUTO5616414669161256","platform":"danmuji","type":2,"key":"' + bytes(key, "utf-8") + b'"}'
+	verification = b'{"uid":382228653,"roomid":' + bytes(str(realRoomId), "utf-8") + b',"protover":3,"buvid":"XY87B558B729BA2CD745A4FB711BC37C3139D","platform":"danmuji","type":2,"key":"' + bytes(key, "utf-8") + b'"}'
 	dataToSend = (len(verification)+16).to_bytes(4, "big") + bytearray.fromhex("001000010000000700000001") + verification
 	
 	#发送确认信息
