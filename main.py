@@ -12,7 +12,7 @@ class voiceBroadcaster:
 	locker = Lock()
 	
 	#初始化
-	def __init__(self, numThread, voicePath, dictPath):
+	def __init__(self, numThread):
 		self.numThread = numThread
 		self.hzysProcesser = huoZiYinShua("./settings.json")
 	
@@ -59,8 +59,21 @@ def welcome(voiceBroad, audience):
 #传话太监
 def chuanHua(voiceBroad, speaker, content):
 	text = "\"{}\"说\"{}\"".format(speaker, content)
-	print(text)
-	voiceBroad.appendText(text)
+	chuanhuaswitch = 1
+
+
+	#关键词过滤	
+	if iskeywordspoton:
+			for keyword in keyworddictionary.items():
+					if keyword[0] in text:
+						chuanhuaswitch = 0
+
+
+	if chuanhuaswitch:
+		print(text)	
+		voiceBroad.appendText(text)	
+	else:
+		print(text+"，但被屏蔽了")
 
 
 
@@ -79,18 +92,22 @@ if __name__ == "__main__":
 	numOfThreads = settings["numOfThreads"]		#线程数
 	userUID = settings["userUID"]				#用户的UID
 	userSESSDATA = settings["usercookie"]			#用户的cookie，仅需要提供SESSDATA，需要与userUID匹配
-	isysddon = settings["isysddon"]
+	isysddon = settings["isysddon"]				#原声大碟是否开启
+	iskeywordspoton = settings["iskeywordspoton"]		#关键词过滤是否开启
+	keywordDir = open(settings["keywordDir"], encoding="utf8")		#关键词词典目录 		
 	#b站cookie获取方式可以参考：https://zmtblog.xdkd.ltd/2021/10/06/Get_bilibili_cookie/
+
+	keyworddictionary = json.load(keywordDir)	
 
 	if isysddon == 1:
 		ysdd = True
-	if isysddon == 0:
+	else:
 		ysdd = False
 
 	#房间号
 	roomId = input("输入房间号：")
 	
-	vb = voiceBroadcaster(numOfThreads, sourceDir, dictDir)
+	vb = voiceBroadcaster(numOfThreads)
 	
 	
 	broadcaster = biliLiveBroadcaster(roomId,
