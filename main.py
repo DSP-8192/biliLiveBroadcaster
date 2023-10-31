@@ -107,7 +107,7 @@ if __name__ == "__main__":
 		ysdd = False
 
 	#房间号
-	roomId = input("最后更新于 2023.10.31  by DJKawaii\n\n基于DSP-8192的项目修改而来\n\n============\n输入房间号：")
+	roomId = input("最后更新于 2023.10.31  by DJKawaii\n\n基于DSP-8192的项目修改而来\n\n更新地址：https://github.com/flagchess/biliLiveBroadcaster/releases\n\n============\n输入房间号：")
 	
 	vb = voiceBroadcaster(numOfThreads)
 	

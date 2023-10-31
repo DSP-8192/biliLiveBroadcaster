@@ -1,5 +1,6 @@
 最后更新于 2023.10.31  by DJKawaii
 基于DSP-8192的项目修改而来
+更新地址：https://github.com/flagchess/biliLiveBroadcaster/releases
 
 ===========
 "dictionary.json"里面可以定义非汉字字符的读法
