@@ -7,4 +7,6 @@
 	"userUID": "0000000",
 	"usercookie": "0000000",
 	"isysddon":1
+	"iskeywordspoton":1,
+	"keywordDir":"./keyword.json"
 }
