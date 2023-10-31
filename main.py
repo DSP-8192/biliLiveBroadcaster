@@ -52,7 +52,8 @@ def thank(voiceBroad, sender, quantity, giftName):
 def welcome(voiceBroad, audience):
 	text = "欢迎{}进入直播间".format(audience)
 	print(text)
-	voiceBroad.appendText(text)
+	if iswelcomeon:
+		voiceBroad.appendText(text)
 
 
 
@@ -94,7 +95,8 @@ if __name__ == "__main__":
 	userSESSDATA = settings["usercookie"]			#用户的cookie，仅需要提供SESSDATA，需要与userUID匹配
 	isysddon = settings["isysddon"]				#原声大碟是否开启
 	iskeywordspoton = settings["iskeywordspoton"]		#关键词过滤是否开启
-	keywordDir = open(settings["keywordDir"], encoding="utf8")		#关键词词典目录 		
+	keywordDir = open(settings["keywordDir"], encoding="utf8")		#关键词词典目录 
+	iswelcomeon = settings["iswelcomeon"]				#是否开启欢迎进场功能
 	#b站cookie获取方式可以参考：https://zmtblog.xdkd.ltd/2021/10/06/Get_bilibili_cookie/
 
 	keyworddictionary = json.load(keywordDir)	
@@ -105,7 +107,7 @@ if __name__ == "__main__":
 		ysdd = False
 
 	#房间号
-	roomId = input("输入房间号：")
+	roomId = input("最后更新于 2023.10.31  by DJKawaii\n\n基于DSP-8192的项目修改而来\n\n============\n输入房间号：")
 	
 	vb = voiceBroadcaster(numOfThreads)
 	

@@ -6,7 +6,8 @@
 	"numOfThreads":2,
 	"userUID": "0000000",
 	"usercookie": "0000000",
-	"isysddon":1
+	"isysddon":1,
 	"iskeywordspoton":1,
-	"keywordDir":"./keyword.json"
+	"keywordDir":"./keyword.json",
+	"iswelcomeon":1
 }

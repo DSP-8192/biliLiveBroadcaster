@@ -223,7 +223,8 @@ class huoZiYinShua:
 						except Exception as e:
 							#加入缺失素材列表
 							if word not in missingPinyin:
-									missingPinyin.append(word)
+									if word !=('\"'):				#忽略了“"”的报错
+										missingPinyin.append(word)
 							#以空白音频代替
 							self.__concatenated = np.concatenate((self.__concatenated,
 																np.zeros(int(_targetSR/4))))
