@@ -9,9 +9,9 @@ import requests
 from functools import partial
 import timeit
 
-
-
 headers = {'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/70.0.3538.25 Safari/537.36 Core/1.70.3880.400 QQBrowser/10.8.4554.400 '}
+
+
 #获取真实房间号
 def _getRealRoomId(roomId):
 	roomInfo = requests.get("https://api.live.bilibili.com/room/v1/Room/room_init?id=" + str(roomId),headers=headers).json()
@@ -123,16 +123,17 @@ def _onClose(ws, close_status_code, close_msg):
 
 
 #发送心跳包
-def _sendHeartBeat(ws):
+def _sendHeartBeat(stoplivemode, ws):
 	while(True):
 		#每30秒发送一次
 		time.sleep(30)
 		ws.send(bytearray.fromhex("0000001f0010000100000002000000015b6f626a656374204f626a6563745d"))
-
+		if stoplivemode.is_set():
+			break
 
 
 #统计收到的礼物
-def _collectGiftReceived(giftStat, onReceiveGift):
+def _collectGiftReceived(giftStat, onReceiveGift, stoplivemode):
 	while(True):
 		time.sleep(1)
 		#统计
@@ -140,11 +141,13 @@ def _collectGiftReceived(giftStat, onReceiveGift):
 		
 		for gift in giftList:
 			onReceiveGift(gift[0], gift[2], gift[1])	#用户自定义函数
+		if stoplivemode.is_set():
+			break
 		
 
 
 #已连接上
-def _onOpen(realRoomId, userUID, key, giftStat, onReceiveGift, ws):
+def _onOpen(realRoomId, userUID, key, giftStat, onReceiveGift,stoplivemode, ws):
 	#编辑确认信息
 	verification = b'{"uid":' + bytes(str(userUID), "utf-8") + b',"roomid":' + bytes(str(realRoomId), "utf-8") + b',"protover":3,"buvid":"XY87B558B729BA2CD745A4FB711BC37C3139D","platform":"danmuji","type":2,"key":"' + bytes(key, "utf-8") + b'"}'
 	dataToSend = (len(verification)+16).to_bytes(4, "big") + bytearray.fromhex("001000010000000700000001") + verification
@@ -153,12 +156,14 @@ def _onOpen(realRoomId, userUID, key, giftStat, onReceiveGift, ws):
 	ws.send(dataToSend)
 	
 	#开启心跳包定时
-	Thread(target=_sendHeartBeat, args=(ws,)).start()
+	heartbeatThread = Thread(target=_sendHeartBeat, args=(stoplivemode, ws,))
+	heartbeatThread.start()
 	
 	#定时统计收到的礼物
-	Thread(target=_collectGiftReceived, args=(giftStat, onReceiveGift)).start()
+	Thread(target=_collectGiftReceived, args=(giftStat, onReceiveGift, stoplivemode)).start()
 	
 	print("已连接")
+
 
 
 
@@ -197,7 +202,7 @@ class _giftInfoArray:
 
 
 class biliLiveBroadcaster:	
-	def __init__(self, roomId, userUID, userSESSDATA, onReceiveDanmu, onReceiveGift, onAudienceEnter):
+	def __init__(self, roomId, userUID, userSESSDATA, onReceiveDanmu, onReceiveGift, onAudienceEnter,stoplivemode):
 		self.__giftStat = _giftInfoArray()
 		self.__roomId = roomId
 		self.__userUID = userUID			#新
@@ -205,7 +210,7 @@ class biliLiveBroadcaster:
 		self.__onReceiveDanmu = onReceiveDanmu
 		self.__onReceiveGift = onReceiveGift
 		self.__onAudienceEnter = onAudienceEnter
-	
+		self.__stoplivemode = stoplivemode
 	
 	def startBroadcasting(self):
 		print("连接中")
@@ -222,7 +227,8 @@ class biliLiveBroadcaster:
 														self.__userUID,		#新
 														self.__key,
 														self.__giftStat,
-														self.__onReceiveGift),
+														self.__onReceiveGift,
+														self.__stoplivemode),
 									on_message = partial(_onMessage,
 														self.__onReceiveDanmu,
 														self.__onAudienceEnter,
@@ -230,6 +236,4 @@ class biliLiveBroadcaster:
 									on_error = _onError,
 									on_close = _onClose)
 		
-		ws.run_forever(dispatcher = rel)
-		rel.signal(2, rel.abort)
-		rel.dispatch()
+		ws.run_forever()

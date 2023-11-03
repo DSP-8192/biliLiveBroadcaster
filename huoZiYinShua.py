@@ -71,7 +71,7 @@ def _modifyPitchAndSpeed(data, pitchMultiple, speedMultiple):
 		return data
 	
 	elif (pitchMultiple > 2 or speedMultiple < 0.5):
-		print("过于极端的音调和速度参数可能导致输出结果与预期不符，故不作改动")
+		#print("过于极端的音调和速度参数可能导致输出结果与预期不符，故不作改动")
 		return data
 	
 	else:
@@ -126,7 +126,7 @@ class huoZiYinShua:
 
 		except Exception as e:
 			self.__configSucceed = False
-			print(e)		
+			#print(e)		
 
 
 
@@ -142,12 +142,12 @@ class huoZiYinShua:
 				pitchMult=1, speedMult=1, norm=False, reverse=False):		
 		self.__concatenate(rawData, inYsddMode, pitchMult, speedMult, norm, reverse)
 		self.__export(filePath)
-		print("已导出到" + filePath + "下")
+		#print("已导出到" + filePath + "下")
 	
 	
 	
 	#直接播放
-	def directPlay(self, rawData, tempPath="./HZYSTempOutput/temp.wav",
+	def directPlay(self, rawData, tempPath="./tempOutput/temp.wav",
 					inYsddMode=False, pitchMult=1, speedMult=1, norm=False, reverse=False):
 		self.__concatenate(rawData, inYsddMode, pitchMult, speedMult, norm, reverse)
 		self.__export(tempPath)
@@ -240,7 +240,7 @@ class huoZiYinShua:
 																	norm)))
 				#如果出现错误
 				except Exception as e:
-					print(e)		#显示错误信息
+					#print(e)		#显示错误信息
 					#加入缺失素材列表
 					if self.__ysddTable[pronunciations[i][0]] not in missingPinyin:
 							missingPinyin.append(self.__ysddTable[pronunciations[i][0]])
@@ -259,6 +259,7 @@ class huoZiYinShua:
 		#如果缺失拼音，则发出警告
 		if len(missingPinyin) != 0:
 			print("警告：缺失或未定义{}".format(missingPinyin))
+			print('\n')
 
 
 	

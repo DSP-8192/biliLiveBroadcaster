@@ -1,33 +1,50 @@
-最后更新于 2023.10.31  by DJKawaii
+最后更新于 2023.11.04  by DJKawaii
 基于DSP-8192的项目修改而来
 更新地址：https://github.com/flagchess/biliLiveBroadcaster/releases
 
 ===========
+⭐⭐使用方法：
+
 "dictionary.json"里面可以定义非汉字字符的读法
 
 "ysddTable.json"里面可定义关键词与原声大碟的匹配
 
 "keyword.json"里面可以自定义屏蔽词
 
-设置在"settings.json"中编辑，其中：
-    "usercookie"为自己的cookie，只需要填SESSDATA的值。获取方法可以参考：https://zmtblog.xdkd.ltd/2021/10/06/Get_bilibili_cookie/
-    "userUID"为自己的UID
-    "numOfThreads"为进程数，当值＞1时可实现并行读弹幕效果
-    "ysddTableFile"、"dictFile"分别为原声大碟与非汉字字符的字典路径
-    "sourceDirectory"、"ysddSourceDirectory"分别为汉字与原声大碟音频素材路径
-    "isysddon"可以开关原声大碟功能（1为开启，0为关闭）
-    "iskeywordspoton"可以开关关键词屏蔽功能（1为开启，0为关闭）
-    "keywordDir"为关键词字典路径
-    "iswelcomeon"可以开关进场欢迎功能（1为开启，0为关闭）
+首次使用在线模式时需要扫码登录
+当弹幕姬无法获取弹幕时可以考虑重新扫码登录
+
 ===========
 
 
 
 
 更新日志
+===========
 
 
+2023.11.04
+⭐将HZYS_GUI与弹幕姬进行了合并
+※原本地功能仍可用
+※倒放、移调、音量统一现在在在线模式中可用
 
+倒放、移调、音量统一、原声大碟、屏蔽词、进场欢迎功能现在可在在线模式中启用和关闭
+
+更换了新的b站登陆方式——扫码登陆
+简化了settings.json
+※现在仅需GUI界面即可完成所有操作
+
+⭐新增：在线模式
+userUID、userCookie现在为程序自动获取
+线程数、房间号现在被整合进GUI界面的设置中
+
+将所有标准输出重定向到文本框中
+
+添加了程序说明与更新按钮
+新增日志隐藏功能以解决性能问题
+
+新增：读弹幕、感谢礼物功能开关
+※读弹幕、感谢礼物、进场欢迎功能默认开启
 ===========
 
 2023.10.31
@@ -53,14 +70,25 @@
 
 ===========
 
-2023.9.21
+2023.09.21
 更换登陆方式使弹幕姬可用
 
 ===========
 
-2023.9.13
+2023.09.13
 更换WSS源使弹幕姬可用
 
+===========
+设置在"settings.json"中编辑，其中：
+    "usercookie"为自己的cookie，只需要填SESSDATA的值。获取方法可以参考：https://zmtblog.xdkd.ltd/2021/10/06/Get_bilibili_cookie/
+    "userUID"为自己的UID
+    "numOfThreads"为进程数，当值＞1时可实现并行读弹幕效果
+    "ysddTableFile"、"dictFile"分别为原声大碟与非汉字字符的字典路径
+    "sourceDirectory"、"ysddSourceDirectory"分别为汉字与原声大碟音频素材路径
+    "isysddon"可以开关原声大碟功能（1为开启，0为关闭）
+    "iskeywordspoton"可以开关关键词屏蔽功能（1为开启，0为关闭）
+    "keywordDir"为关键词字典路径
+    "iswelcomeon"可以开关进场欢迎功能（1为开启，0为关闭）
 ===========
 
 1.0
