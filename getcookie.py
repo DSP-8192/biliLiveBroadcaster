@@ -33,7 +33,14 @@ def make_qrcode(data):
     qr.add_data(data['url'])
     qr.make(fit=True)
     img = qr.make_image(fill_color="black")
-    img.show()
+    try:
+        img.save("Qrcode.png")
+    except:
+        pass
+    try:
+        img.show()
+    except:
+        pass
     print('\n')
 
 
@@ -63,22 +70,22 @@ def getcookienow(stopcookie):
             data_login = json.loads(data_login.text)
         code = int(data_login['data']['code'])
         if code == 86090:
-            print("已扫码，请在手机上确认登陆")
+            print("已扫码，请在手机上确认登录")
             print('\n')
             break
         if code == 86038:
-            print("登陆失败，二维码超时")
+            print("登录失败，二维码超时")
             print('\n')
             break  
         if stopcookie.is_set():
             break
     while(1):
         if code == 0:
-            print("登陆成功")
+            print("登录成功")
             print('\n')
             cookie = dict(client.cookies)
             sav_cookie(cookie, 'cookie')
-            print("成功保存了新的登陆状态")
+            print("成功保存了新的登录状态")
             print('\n')
             break
         if code == 86038:

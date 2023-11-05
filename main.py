@@ -15,6 +15,8 @@ import ctypes
 from biliLiveBroadcaster import *
 import sys
 from getcookie import *
+from update import *
+from jsonloader import runjsonloader
 import webbrowser
 global livethread
 global liveactionflag
@@ -59,11 +61,15 @@ def beforegetcookie(stopcookie):
 	actionButton.config(state="disable")
 	livemodeCkBt.config(state="disable")
 	cookieButton.config(state="disable")
-	loginstatecode = getcookienow(stopcookie)
-	if (loginstatecode==0):
-		messagebox.showinfo("登录", "登陆成功, 请手动关闭二维码图片")
-	if (loginstatecode==86038):
-		messagebox.showinfo("登录", "登陆失败, 原因: 超时, 请尝试重启整个程序")
+	try:
+		loginstatecode = getcookienow(stopcookie)		#开启代理软件时无法获取cookie
+		if (loginstatecode==0):
+			messagebox.showinfo("登录成功", "登录成功, 请手动关闭二维码图片")
+		if (loginstatecode==86038):
+			messagebox.showinfo("登录失败", "登录失败, 原因: 超时, 请尝试重启整个程序")
+	except:
+		messagebox.showinfo("登录失败", "登录失败, 无法建立连接\n警告: 请关闭所有代理软件(加速器、VPN等), 否则无法正常登录！！\n\n")
+		pass
 	actionButton.config(state="normal")
 	livemodeCkBt.config(state="normal")
 	cookieButton.config(state="normal")
@@ -77,7 +83,7 @@ def onTrytologin():
 		print("打断了上一次登录……")
 	except:
 		pass
-	print("请使用哔哩哔哩APP扫描二维码")
+	print("请使用哔哩哔哩APP扫描二维码\n如果二维码没有弹出, 请手动打开此目录下\"Qrcode.png\"")
 	cookieProcess = threading.Thread(target=beforegetcookie,args=(stopcookie,))
 	cookieProcess.start()
 	#cookieButton.config(state="disable")
@@ -330,7 +336,7 @@ def createConfigWindow():
 	text4_1 = Label(configWindow, text="原声大碟关键词与音频对照表：",
 					font=font.Font(family="微软雅黑", size=11))
 	text4_2 = Label(configWindow, text=configuration["ysddTableFile"])
-	text5_1 = Label(configWindow, text="屏蔽词词库：",
+	text5_1 = Label(configWindow, text="敏感词词库：",
 					font=font.Font(family="微软雅黑", size=11))
 	text5_2 = Label(configWindow, text=configuration["keywordDir"])
 	text6_1 = Label(configWindow, text="线程数(1-5之间的数字): ",
@@ -346,9 +352,15 @@ def createConfigWindow():
 					height=1, width=8, font=font.Font(family="微软雅黑", size=11))
 	configButton3 = Button(configWindow, text="选择文件", command=lambda: setConfig("dictFile", texts),
 					height=1, width=8, font=font.Font(family="微软雅黑", size=11))
+	configButton3_1 = Button(configWindow, text="编辑字典", command=lambda: runjsonloader(2),
+					height=1, width=8, font=font.Font(family="微软雅黑", size=11))
 	configButton4 = Button(configWindow, text="选择文件", command=lambda: setConfig("ysddTableFile", texts),
 					height=1, width=8, font=font.Font(family="微软雅黑", size=11))
+	configButton4_1 = Button(configWindow, text="编辑列表", command=lambda: runjsonloader(3),
+					height=1, width=8, font=font.Font(family="微软雅黑", size=11))
 	configButton5 = Button(configWindow, text="选择文件", command=lambda: setConfig("keywordDir", texts),
+					height=1, width=8, font=font.Font(family="微软雅黑", size=11))
+	configButton5_1 = Button(configWindow, text="编辑词库", command=lambda: runjsonloader(1),
 					height=1, width=8, font=font.Font(family="微软雅黑", size=11))
 	configButtonx= Button(configWindow, text="全部恢复默认设置", command=lambda: setConfigtodef(),
 					height=1, width=16, font=font.Font(family="微软雅黑", size=11))
@@ -382,12 +394,15 @@ def createConfigWindow():
 	configButton1.place(x=0, y=40)
 	configButton2.place(x=0, y=140)
 	configButton3.place(x=0, y=240)
+	configButton3_1.place(x=100 ,y=240)
 	configButton4.place(x=0, y=340)
+	configButton4_1.place(x=100 ,y=340)
 
 	configButtonx.place(x=200, y=340)
 	text5_1.place(x=0, y=400)
 	text5_2.place(x=0, y=420)
 	configButton5.place(x=0, y=440)
+	configButton5_1.place(x=100 ,y=440)
 
 	text6_1.place(x=0, y=500)
 	numberArea1.place(x=0, y=520)
@@ -561,7 +576,7 @@ def livemodePlay():
 	userUID =int(load_UID())				#用户的UID
 	userSESSDATA = load_cookie()
 	#b站cookie获取方式可以参考：https://zmtblog.xdkd.ltd/2021/10/06/Get_bilibili_cookie/
-	#1.1更新：新增扫码登陆，旧方法已废弃
+	#1.1更新：新增扫码登录，旧方法已废弃
 
 
 
@@ -586,9 +601,19 @@ def livemodePlay():
 	vb.startOperation()
 	broadcaster.startBroadcasting()
 
-#检查更新
-def checkupdate():
-	webbrowser.open_new("https://github.com/flagchess/biliLiveBroadcaster/releases")
+#更新日志
+def updateinfo():
+	global updateinfoWindow
+	updateinfoWindow = Toplevel(mainWindow)
+	updateinfoWindow.geometry("480x400")
+	updateinfoWindow.title("关于")
+	updateinfoWindow.resizable(False, False)
+	update_info_scrolledtext = scrolledtext.ScrolledText(updateinfoWindow, width=55, height=20,
+									font=font.Font(family="微软雅黑", size=10))
+	update_info_text = getupdateinfo()
+	update_info_scrolledtext.place(x=10, y=0)
+	update_info_scrolledtext.insert('end', update_info_text)
+	update_info_scrolledtext.config(state="disabled")
 
 # 重定向输出
 class StdoutRedirector(object):
@@ -728,11 +753,13 @@ speedMultScale = Scale(mainWindow, from_=0.5, to=2.0, orient=HORIZONTAL, width=1
 
 #检查更新相关
 
-checkupdate = Button(mainWindow, text="更新", command=checkupdate, height=1, width=8,
+checkupdateCkBt = Button(mainWindow, text="更新", command=checkupdate, height=1, width=8,
 					font=font.Font(family="微软雅黑", size=8))
 checkupdateinfo = Label(mainWindow, 
-						text="最后更新于 2023.11.4  by DJKawaii\n基于DSP-8192的项目修改而来\n更新地址：https://github.com/flagchess/biliLiveBroadcaster/releases", 
+						text="最后更新于 2023.11.05  by DJKawaii\n基于DSP-8192的项目修改而来\n更新地址：https://github.com/flagchess/biliLiveBroadcaster/releases", 
 						font=font.Font(family="微软雅黑", size=10))
+updateinfoCkBt = Button(mainWindow, text="关于", command=updateinfo, height=1, width=8,
+					font=font.Font(family="微软雅黑", size=8))
 
 
 #主函数
@@ -748,7 +775,7 @@ if __name__ == "__main__":
 	#主窗口
 	#-----------------------------
 	mainWindow.geometry("480x760")
-	mainWindow.title("电棍棍活字")
+	mainWindow.title("电棍棍活字 ver.2023.11.05")
 	mainWindow.resizable(False, False)
 	#窗口图标
 	try:
@@ -784,7 +811,8 @@ if __name__ == "__main__":
 	speedMultScale.place(x=110, y=580)
 	
 	checkupdateinfo.place(x=20, y=640)
-	checkupdate.place(x=20, y=710)
+	checkupdateCkBt.place(x=20, y=710)
+	updateinfoCkBt.place(x=100, y=710)
 	
 	keywordCkBt.place(x=20,y=390)
 	welcomeCkBt.place(x=20,y=420)
