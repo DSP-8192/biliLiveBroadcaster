@@ -1,8 +1,15 @@
+psola
+numpy
+soundfile
+pypinyin
+playsound
 pydub==0.25.1
-pypinyin==0.46.0
-playsound==1.3.0
 websocket==0.2.1
 websocket-client==1.3.2
 brotlipy==0.7.0
 rel==0.4.7
 requests==2.27.1
+#注意：如果直接用pip install playsound安装，Windows系统下会报错
+#需要去原作者Github页面下载最新的playsound.py
+#https://github.com/TaylorSMarks/playsound/blob/master/playsound.py
+Pillow
