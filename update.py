@@ -2,7 +2,7 @@ import webbrowser
 
 
 def getupdateinfo():
-    updateinfo = ("最后更新于 2023.11.05  by DJKawaii\n\
+    updateinfo = ("最后更新于 2024.02.15  by DJKawaii\n\
 基于@DSP_8192 的项目修改而来\n\
 感谢@伏尸王结城友奈 的测试\n\
 更新地址：https://github.com/flagchess/biliLiveBroadcaster/releases\n\
@@ -26,6 +26,13 @@ def getupdateinfo():
 \n\
 \n\
 更新日志\n\
+===========\n\
+\n\
+2024.02.18\n\
+⭐添加了音量控制功能\n\
+添加了置顶弹幕的功能\n\
+\n\
+\n\
 ===========\n\
 \n\
 2023.11.05\n\

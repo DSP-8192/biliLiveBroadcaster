@@ -18,9 +18,12 @@ from getcookie import *
 from update import *
 from jsonloader import runjsonloader
 import webbrowser
+from pycaw.pycaw import AudioUtilities, ISimpleAudioVolume
 global livethread
 global liveactionflag
+global ottoVolume
 liveactionflag = 0	#检测是否处于播报模式
+ottoVolume = 1
 
 #新建活字印刷类实例
 HZYS = huoZiYinShua("./settings.json")
@@ -46,14 +49,16 @@ def onDirectPlay():
 	except:
 		pass
 	#播放	
-	textToRead = textArea.get(1.0, 'end')
+	textToRead = textArea1.get(1.0, 'end')
 	myProcess = Process(target=HZYS.directPlay,
 						kwargs={"rawData": textToRead,
 								"inYsddMode": inYsddMode.get(),
 								"pitchMult": pitchMultOption.get(),
 								"speedMult": speedMultOption.get(),
 								"norm": normAudio.get(),
-								"reverse": reverseAudio.get()})
+								"reverse": reverseAudio.get(),
+								"volumeotto":volumeMultOption.get()
+									})
 	myProcess.start()
 
 #套个壳来禁用启动，直到getcookienow返回值
@@ -110,7 +115,7 @@ def stop_thread(thread):
 
 #导出的监听事件
 def onExport():
-	textToRead = textArea.get(1.0, 'end')
+	textToRead = textArea1.get(1.0, 'end')
 	outputFile = filedialog.asksaveasfilename(title="选择导出路径",
 											filetypes = (("wav音频文件", "*.wav"),))
 	if(outputFile != ""):
@@ -122,7 +127,8 @@ def onExport():
 					pitchMult=pitchMultOption.get(),
 					speedMult=speedMultOption.get(),
 					norm=normAudio.get(),
-					reverse=reverseAudio.get())
+					reverse=reverseAudio.get(),
+					volumeotto=volumeMultOption.get())
 		messagebox.showinfo("疑似是成功了", "已导出到" + outputFile +"下")
 
 
@@ -235,7 +241,13 @@ class voiceBroadcaster:
 				data = self.listToRead.pop(0)
 				self.locker.release()
 				#用活字印刷播报
-				self.hzysProcesser.directPlay(data, filePath,inYsddMode.get(),pitchMultOption.get(),speedMultOption.get(),normAudio.get(),reverseAudio.get())
+				self.hzysProcesser.directPlay(data, filePath,
+								  inYsddMode.get(),
+								  pitchMultOption.get(),
+								  speedMultOption.get(),
+								  normAudio.get(),
+								  reverseAudio.get(),
+								  volumeMultOption.get())
 			if stoplivemode.is_set():
 				self.locker.acquire()
 				self.listToRead = []
@@ -426,22 +438,25 @@ normAudio = BooleanVar()
 reverseAudio = BooleanVar()
 pitchMultOption = DoubleVar()
 speedMultOption = DoubleVar()
+volumeMultOption = DoubleVar()
 iflivemodeon = BooleanVar()
 iskeywordspoton = BooleanVar()
 iswelcomeon = BooleanVar()
 ischuanhuaon = BooleanVar()
 ishidemsgon = BooleanVar()
 isgifton = BooleanVar()
+istipWindowon = BooleanVar()
 
 #是否开启直播模式
 def livemode():
-	global livehidden
+	global livehidden,textWindow
 	if livehidden:			#直播模式关闭
 		keywordCkBt.config(state="disable")
 		welcomeCkBt.config(state="disable")
 		hidemsgCkBt.config(state="disable")
 		chuanhuaCkBt.config(state="disable")
 		giftCkBt.config(state="disable")
+		tipWindowCkBt.config(state="disabled")
 
 		actionButton.grid()
 		actionButton.grid_remove()		
@@ -454,9 +469,10 @@ def livemode():
 
 		playButton.place(x=70, y=230)
 		exportButton.place(x=190, y=230)
-		textArea.config(state="normal")	#自动重置文本框
+		textArea1.config(state="normal")	#自动重置文本框
 		ishidemsgon.set(False)
-		textArea.delete("1.0", "end")
+		textArea1.delete("1.0", "end")
+		istipWindowon.set(False)
 		try:
 			stopcookie.set()
 		except:
@@ -467,6 +483,10 @@ def livemode():
 			pass
 		try:
 			stop_thread(livethread)
+		except:
+			pass
+		try:
+			textWindow.destroy()
 		except:
 			pass
 		
@@ -482,10 +502,11 @@ def livemode():
 		hidemsgCkBt.config(state="normal")
 		chuanhuaCkBt.config(state="normal")
 		giftCkBt.config(state="normal")
+		tipWindowCkBt.config(state="normal")
 
 		actionButton.place(x=70, y=230)
 		cookieButton.place(x=190, y=230)
-		textArea.delete("1.0", "end")
+		textArea1.delete("1.0", "end")
 		#livemodeCkBt.config(state="disable")
 		try:
 			stoplivemode.clear()
@@ -641,16 +662,62 @@ class StdoutRedirector(object):
 
 #隐藏日志
 def hidemsg():
+	global textArea2
 	if(ishidemsgon.get()):
-		textArea.config(state="disabled")
+		textArea1.config(state="disabled")
+		try:
+			textArea2.config(state="disabled")
+		except:
+			pass
 	else:
-		textArea.config(state="normal")
+		textArea1.config(state="normal")
+		try:
+			textArea2.config(state="normal")
+		except:
+			pass
+	
+
+#调整音量
+#def setottoVolume():
+	#ottosessions = AudioUtilities.GetAllSessions()
+	#volumeMultOption.get()
+	#for ottosession in ottosessions:
+	#	ottovolume2 = ottosession._ctl.QueryInterface(ISimpleAudioVolume)
+		#print(session.Process) # 这一步可获得进程名称
+	#	if ottosession.Process and ottosession.Process.name() == "Steam.exe":
+			#print("volume.GetMasterVolume(): %s" % volume.GetMasterVolume())
+	#		ottovolume2.SetMasterVolume(ottoVolume, None) 
+	#audio_controller = AudioController('Steam.exe')
+	#audio_controller.set_volume(1.0)
+	#audio_controller.mute()#静音了
+	#audio_controller.decrease_volume(ottoVolume)
+	#audio_controller.unmute()#不静音了
+
+def tipWindow():
+	global textArea,textArea1,textWindow,textArea2
+	if (istipWindowon.get()):
+		
+		textWindow = Toplevel(mainWindow)
+		textWindow.geometry("480x600")
+		textWindow.title("输出")
+		textArea2 = scrolledtext.ScrolledText(textWindow, width=55, height=60,
+									font=font.Font(family="微软雅黑", size=10))
+		textArea = textArea2
+		textArea2.place(x=10, y=0)
+		#textWindow.overrideredirect(1)
+		textWindow.attributes("-topmost", True)
+	else:
+		textArea = textArea1
+		try:
+			textWindow.destroy()
+		except:
+			pass
 
 
 #GUI元素
 #-------------------------------------------
 #文本框
-textArea = scrolledtext.ScrolledText(mainWindow, width=55, height=11,
+textArea1 = scrolledtext.ScrolledText(mainWindow, width=55, height=11,
 									font=font.Font(family="微软雅黑", size=10))
 
 
@@ -727,6 +794,10 @@ hidemsgCkBt = Checkbutton(mainWindow, text="隐藏日志(用于缓解大量弹�
 						variable=ishidemsgon, onvalue=True, command=hidemsg,offvalue=False,
 						font=font.Font(family="微软雅黑", size=10))
 
+#置顶窗口复选框
+tipWindowCkBt = Checkbutton(mainWindow, text="置顶弹幕输出",
+						variable=istipWindowon, onvalue=True, command=tipWindow,offvalue=False,
+						font=font.Font(family="微软雅黑", size=10))
 
 #音调偏移文本
 pitchMultLabel = Label(mainWindow, text="音调偏移：",
@@ -743,10 +814,19 @@ pitchMultScale = Scale(mainWindow, from_=0.5, to=2.0, orient=HORIZONTAL, width=1
 speedMultLable = Label(mainWindow, text="播放速度：",
 						font=font.Font(family="微软雅黑", size=10))
 
+#音量调整文本
+volumeMultLable = Label(mainWindow, text="音量增益(%)：",
+						font=font.Font(family="微软雅黑", size=10))
+
 
 #播放速度滑块
 speedMultScale = Scale(mainWindow, from_=0.5, to=2.0, orient=HORIZONTAL, width=15, length=200,
 						resolution=0.1, variable=speedMultOption,
+						font=font.Font(family="微软雅黑", size=9))
+
+#音量调整滑块
+volumeMultScale = Scale(mainWindow, from_=0, to=3, orient=HORIZONTAL, width=15, length=200,
+						resolution=0.01, variable=volumeMultOption,
 						font=font.Font(family="微软雅黑", size=9))
 
 
@@ -756,7 +836,7 @@ speedMultScale = Scale(mainWindow, from_=0.5, to=2.0, orient=HORIZONTAL, width=1
 checkupdateCkBt = Button(mainWindow, text="更新", command=checkupdate, height=1, width=8,
 					font=font.Font(family="微软雅黑", size=8))
 checkupdateinfo = Label(mainWindow, 
-						text="最后更新于 2023.11.05  by DJKawaii\n基于DSP-8192的项目修改而来\n更新地址：https://github.com/flagchess/biliLiveBroadcaster/releases", 
+						text="最后更新于 2024.02.18  by DJKawaii\n基于DSP-8192的项目修改而来\n更新地址：https://github.com/flagchess/biliLiveBroadcaster/releases", 
 						font=font.Font(family="微软雅黑", size=10))
 updateinfoCkBt = Button(mainWindow, text="关于", command=updateinfo, height=1, width=8,
 					font=font.Font(family="微软雅黑", size=8))
@@ -774,8 +854,8 @@ if __name__ == "__main__":
 
 	#主窗口
 	#-----------------------------
-	mainWindow.geometry("480x760")
-	mainWindow.title("电棍棍活字 ver.2023.11.05")
+	mainWindow.geometry("480x830")
+	mainWindow.title("电棍棍活字 ver.2024.02.18")
 	mainWindow.resizable(False, False)
 	#窗口图标
 	try:
@@ -787,10 +867,10 @@ if __name__ == "__main__":
 
 
 	
-
+	textArea=textArea1
 	#元素属性
 	#-----------------------------
-	textArea.place(x=10, y=0)
+	textArea1.place(x=10, y=0)
 
 	playButton.place(x=70, y=230)
 	exportButton.place(x=190, y=230)
@@ -802,30 +882,35 @@ if __name__ == "__main__":
 	livemodeCkBt.place(x=20, y=360)
 
 
-	pitchMultLabel.place(x=20, y=555)
+	pitchMultLabel.place(x=20, y=585)
 	pitchMultOption.set(1)
-	pitchMultScale.place(x=110, y=540)
+	pitchMultScale.place(x=110, y=570)
 
-	speedMultLable.place(x=20, y=595)
+	speedMultLable.place(x=20, y=625)
 	speedMultOption.set(1)
-	speedMultScale.place(x=110, y=580)
+	speedMultScale.place(x=110, y=610)
+
+	volumeMultLable.place(x=20, y=665)
+	volumeMultOption.set(1)
+	volumeMultScale.place(x=110, y=650)
 	
-	checkupdateinfo.place(x=20, y=640)
-	checkupdateCkBt.place(x=20, y=710)
-	updateinfoCkBt.place(x=100, y=710)
+	checkupdateinfo.place(x=20, y=710)
+	checkupdateCkBt.place(x=20, y=780)
+	updateinfoCkBt.place(x=100, y=780)
 	
 	keywordCkBt.place(x=20,y=390)
 	welcomeCkBt.place(x=20,y=420)
 	hidemsgCkBt.place(x=20,y=510)
 	chuanhuaCkBt.place(x=20,y=450)
 	giftCkBt.place(x=20,y=480)
+	tipWindowCkBt.place(x=20,y=540)
 
 	keywordCkBt.config(state="disable")
 	welcomeCkBt.config(state="disable")
 	hidemsgCkBt.config(state="disable")
 	chuanhuaCkBt.config(state="disable")
 	giftCkBt.config(state="disable")
-	
+	tipWindowCkBt.config(state="disabled")
 	iswelcomeon.set(True)
 	ischuanhuaon.set(True)
 	isgifton.set(True)
